@@ -51,7 +51,9 @@
 # @param command
 #   The installed `ovlens` command.
 # @param docs_dir
-#   Where the documentation is written and read.
+#   Where the documentation is written and read. The default is under the
+#   OpenVox server's data directory, which exists only where openvox-server
+#   is installed; set it on any other node.
 # @param generate_ensure
 #   `present` regenerates the documentation from a timer. Use `absent` when
 #   something else runs `ovlens generate`, such as an r10k `postrun` command.

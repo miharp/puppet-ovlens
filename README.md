@@ -114,9 +114,8 @@ See [REFERENCE.md](REFERENCE.md).
 - Needs systemd. Supported platforms are listed in `metadata.json`.
 - The timer is managed with puppet/systemd, which includes that module's
   `systemd` class with whatever settings your site gives it.
-- Unit-tested only so far. The package itself is tested on real OpenVox
-  agents, but this module's install, the timer's sandbox and the SSH account
-  have not been applied on a real server.
+- The default `docs_dir` is under `/opt/puppetlabs/server/data`, which exists
+  only where openvox-server is installed. On any other node, set `docs_dir`.
 - The codavox module declares the same repository resources. Both managing the
   repository on one node is a duplicate declaration; set `repo_manage` to
   false in one of them.
@@ -127,3 +126,20 @@ See [REFERENCE.md](REFERENCE.md).
 docker run --rm -v "$PWD:/repo" ghcr.io/voxpupuli/voxbox:8 validate lint check rubocop spec
 docker run --rm -v "$PWD:/repo" ghcr.io/voxpupuli/voxbox:8 strings:generate:reference
 ```
+
+## Tested
+
+Applied on 2026-11-16 to an OpenVox 9 server (AlmaLinux 10, openvox-server
+9.2.0) and an Ubuntu 24.04 agent, with ovlens 0.1.0 from the harpworks
+repository:
+
+- the package installs from the repository with its metadata signature checked
+- the timer fires on activation and the sandboxed service documents every
+  environment; a second run leaves them all unchanged
+- a second apply changes nothing
+- the MCP server answers over SSH as the `ovlens` account, and its key can
+  neither run another command nor forward a port
+- the service and the SSH login also work with SELinux enforcing
+- `generate_ensure => 'absent'` removes the timer and keeps the documentation
+
+Not yet tested on an OpenVox 8 server or on Debian.

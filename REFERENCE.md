@@ -159,7 +159,9 @@ Default value: `'/usr/bin/ovlens'`
 
 Data type: `Stdlib::Absolutepath`
 
-Where the documentation is written and read.
+Where the documentation is written and read. The default is under the
+OpenVox server's data directory, which exists only where openvox-server
+is installed; set it on any other node.
 
 Default value: `'/opt/puppetlabs/server/data/ovlens'`
 
