@@ -1,0 +1,19 @@
+<%- | Stdlib::Absolutepath $command,
+      Stdlib::Absolutepath $docs_dir,
+      Optional[Stdlib::Absolutepath] $environmentpath,
+      String[1] $targets,
+| -%>
+# Managed by Puppet (ovlens module).
+[Unit]
+Description=Generate ovlens documentation for deployed OpenVox code
+Documentation=https://github.com/miharp/ovlens
+
+[Service]
+Type=oneshot
+ExecStart=<%= $command %> generate --docs-dir "<%= $docs_dir %>"<% if $environmentpath { %> --environmentpath "<%= $environmentpath %>"<% } %> <%= $targets %>
+Nice=10
+# The generator reads the code and writes only its own directory.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=<%= $docs_dir %>
+PrivateTmp=true

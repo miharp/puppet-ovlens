@@ -1,0 +1,81 @@
+{
+  "name": "miharp-ovlens",
+  "version": "0.1.0",
+  "author": "Michael Harp",
+  "summary": "Installs ovlens and keeps the documentation for deployed OpenVox code up to date",
+  "license": "Apache-2.0",
+  "source": "https://github.com/miharp/puppet-ovlens",
+  "project_page": "https://github.com/miharp/puppet-ovlens",
+  "issues_url": "https://github.com/miharp/puppet-ovlens/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 9.0.0 < 11.0.0"
+    },
+    {
+      "name": "puppet/systemd",
+      "version_requirement": ">= 8.0.0 < 12.0.0"
+    },
+    {
+      "name": "puppetlabs/sshkeys_core",
+      "version_requirement": ">= 2.0.0 < 4.0.0"
+    }
+  ],
+  "requirements": [
+    {
+      "name": "openvox",
+      "version_requirement": ">= 8.0.0 < 10.0.0"
+    }
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "CentOS",
+      "operatingsystemrelease": [
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "AlmaLinux",
+      "operatingsystemrelease": [
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "Rocky",
+      "operatingsystemrelease": [
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "12",
+        "13"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "22.04",
+        "24.04"
+      ]
+    }
+  ],
+  "tags": [
+    "openvox",
+    "strings",
+    "documentation",
+    "mcp"
+  ]
+}

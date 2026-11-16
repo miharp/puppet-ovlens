@@ -1,0 +1,11 @@
+<%- | String[1] $interval | -%>
+# Managed by Puppet (ovlens module).
+[Unit]
+Description=Regenerate ovlens documentation after code deploys
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=<%= $interval %>
+
+[Install]
+WantedBy=timers.target

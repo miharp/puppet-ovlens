@@ -1,0 +1,19 @@
+---
+# No symlink for the module under test: rspec-puppet creates
+# spec/fixtures/modules/ovlens itself, taking the name from metadata.json.
+fixtures:
+  forge_modules:
+    stdlib:
+      repo: puppetlabs/stdlib
+      ref: 10.1.1
+    systemd:
+      repo: puppet/systemd
+      ref: 11.1.0
+    # systemd depends on inifile.
+    inifile:
+      repo: puppetlabs/inifile
+      ref: 6.2.0
+    # ssh_authorized_key left Puppet core; openvox-agent bundles it, the test gem does not.
+    sshkeys_core:
+      repo: puppetlabs/sshkeys_core
+      ref: 3.1.0
