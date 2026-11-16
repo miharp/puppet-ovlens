@@ -230,4 +230,3 @@ The public keys allowed to log in as it, by a name of your choosing. Each
 key is locked to the MCP server command. Keys not listed here are removed.
 
 Default value: `{}`
-
