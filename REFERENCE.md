@@ -34,12 +34,21 @@ able to reach the MCP server over SSH.
 include ovlens
 ```
 
-##### Install from a gem file and document two environments
+##### Pin a version and document two environments
 
 ```puppet
 class { 'ovlens':
-  package_source => '/opt/ovlens/ovlens-0.1.0.gem',
+  package_ensure => '0.1.0',
   environments   => ['production', 'staging'],
+}
+```
+
+##### Install from a gem file on a server that cannot reach the repository
+
+```puppet
+class { 'ovlens':
+  package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
+  package_install_options => [],
 }
 ```
 
@@ -63,6 +72,7 @@ The following parameters are available in the `ovlens` class:
 * [`package_ensure`](#-ovlens--package_ensure)
 * [`package_provider`](#-ovlens--package_provider)
 * [`package_source`](#-ovlens--package_source)
+* [`package_install_options`](#-ovlens--package_install_options)
 * [`command`](#-ovlens--command)
 * [`docs_dir`](#-ovlens--docs_dir)
 * [`generate_ensure`](#-ovlens--generate_ensure)
@@ -94,7 +104,8 @@ Default value: `'ovlens'`
 
 Data type: `String[1]`
 
-`installed`, `latest`, `absent` or a version.
+`installed`, `absent` or a version. Avoid `latest`: the gem provider's
+check for it also asks rubygems.org, whatever the source.
 
 Default value: `'installed'`
 
@@ -109,12 +120,24 @@ Default value: `'puppet_gem'`
 
 ##### <a name="-ovlens--package_source"></a>`package_source`
 
-Data type: `Optional[String[1]]`
+Data type: `String[1]`
 
-A gem file or gem server to install from, for a gem that is not on
-RubyGems.
+The gem repository or gem file to install from. The default is the
+harpworks repository, which carries ovlens and its dependencies. ovlens is
+not published on RubyGems.
 
-Default value: `undef`
+Default value: `'https://packages.harpworks.org/gems'`
+
+##### <a name="-ovlens--package_install_options"></a>`package_install_options`
+
+Data type: `Array[String[1]]`
+
+Options for `gem install`. The default, `--clear-sources`, makes the
+repository the only source, so a gem published on RubyGems under the same
+name cannot be installed instead. Empty it when installing from a gem file,
+so the dependencies can come from RubyGems.
+
+Default value: `['--clear-sources']`
 
 ##### <a name="-ovlens--command"></a>`command`
 

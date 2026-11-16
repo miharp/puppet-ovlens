@@ -6,9 +6,10 @@ class ovlens::install {
 
   if $ovlens::package_manage {
     package { $ovlens::package_name:
-      ensure   => $ovlens::package_ensure,
-      provider => $ovlens::package_provider,
-      source   => $ovlens::package_source,
+      ensure          => $ovlens::package_ensure,
+      provider        => $ovlens::package_provider,
+      source          => $ovlens::package_source,
+      install_options => $ovlens::package_install_options,
     }
   }
 }

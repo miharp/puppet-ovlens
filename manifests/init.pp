@@ -9,10 +9,16 @@
 # @example Document every environment
 #   include ovlens
 #
-# @example Install from a gem file and document two environments
+# @example Pin a version and document two environments
 #   class { 'ovlens':
-#     package_source => '/opt/ovlens/ovlens-0.1.0.gem',
+#     package_ensure => '0.1.0',
 #     environments   => ['production', 'staging'],
+#   }
+#
+# @example Install from a gem file on a server that cannot reach the repository
+#   class { 'ovlens':
+#     package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
+#     package_install_options => [],
 #   }
 #
 # @example Let one SSH key reach the MCP server
@@ -28,13 +34,20 @@
 # @param package_name
 #   The gem to install.
 # @param package_ensure
-#   `installed`, `latest`, `absent` or a version.
+#   `installed`, `absent` or a version. Avoid `latest`: the gem provider's
+#   check for it also asks rubygems.org, whatever the source.
 # @param package_provider
 #   The package provider. `puppet_gem` installs into the agent's Ruby, which
 #   already has OpenVox.
 # @param package_source
-#   A gem file or gem server to install from, for a gem that is not on
-#   RubyGems.
+#   The gem repository or gem file to install from. The default is the
+#   harpworks repository, which carries ovlens and its dependencies. ovlens is
+#   not published on RubyGems.
+# @param package_install_options
+#   Options for `gem install`. The default, `--clear-sources`, makes the
+#   repository the only source, so a gem published on RubyGems under the same
+#   name cannot be installed instead. Empty it when installing from a gem file,
+#   so the dependencies can come from RubyGems.
 # @param command
 #   The installed `ovlens` command.
 # @param docs_dir
@@ -64,7 +77,8 @@ class ovlens (
   String[1] $package_name                    = 'ovlens',
   String[1] $package_ensure                  = 'installed',
   String[1] $package_provider                = 'puppet_gem',
-  Optional[String[1]] $package_source        = undef,
+  String[1] $package_source                  = 'https://packages.harpworks.org/gems',
+  Array[String[1]] $package_install_options  = ['--clear-sources'],
   Stdlib::Absolutepath $command              = '/opt/puppetlabs/puppet/bin/ovlens',
   Stdlib::Absolutepath $docs_dir             = '/opt/puppetlabs/server/data/ovlens',
   Enum['present', 'absent'] $generate_ensure = 'present',

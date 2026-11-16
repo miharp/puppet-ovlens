@@ -10,8 +10,11 @@ describe 'ovlens' do
       context 'with defaults' do
         it { is_expected.to compile.with_all_deps }
 
-        it 'installs the gem into the agent Ruby before anything uses it' do
-          is_expected.to contain_package('ovlens').with(ensure: 'installed', provider: 'puppet_gem', source: nil)
+        it 'installs the gem into the agent Ruby, from the harpworks repository alone, before anything uses it' do
+          is_expected.to contain_package('ovlens').with(
+            ensure: 'installed', provider: 'puppet_gem',
+            source: 'https://packages.harpworks.org/gems', install_options: ['--clear-sources']
+          )
           is_expected.to contain_class('ovlens::install').that_comes_before('Class[ovlens::generate]')
           is_expected.to contain_class('ovlens::install').that_comes_before('Class[ovlens::mcp]')
         end
@@ -63,9 +66,9 @@ describe 'ovlens' do
       end
 
       context 'with a gem file and a pinned version' do
-        let(:params) { { package_source: '/opt/ovlens/ovlens-0.1.0.gem', package_ensure: '0.1.0' } }
+        let(:params) { { package_source: '/opt/ovlens/ovlens-0.1.0.gem', package_install_options: [], package_ensure: '0.1.0' } }
 
-        it { is_expected.to contain_package('ovlens').with(ensure: '0.1.0', source: '/opt/ovlens/ovlens-0.1.0.gem') }
+        it { is_expected.to contain_package('ovlens').with(ensure: '0.1.0', source: '/opt/ovlens/ovlens-0.1.0.gem', install_options: []) }
       end
 
       context 'with package_manage => false' do

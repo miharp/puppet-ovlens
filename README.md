@@ -21,13 +21,31 @@ include ovlens
 A run with nothing to do is cheap: ovlens only parses modules whose files have
 changed.
 
-ovlens is not on RubyGems yet, so point the module at a gem file you have
-copied to the server:
+Pin a version and name the environments:
 
 ```puppet
 class { 'ovlens':
-  package_source => '/opt/ovlens/ovlens-0.1.0.gem',
+  package_ensure => '0.1.0',
   environments   => ['production', 'staging'],
+}
+```
+
+### Where the gem comes from
+
+ovlens is not on RubyGems. The module installs it from the
+[harpworks repository](https://packages.harpworks.org), which carries ovlens
+and its dependencies, with `--clear-sources` so that nothing is fetched from
+rubygems.org. The gem index is not signed; HTTPS to the repository is what
+vouches for it.
+
+On a server that cannot reach the repository, copy the gem there and install
+from the file. The dependencies then come from whatever gem sources the server
+has:
+
+```puppet
+class { 'ovlens':
+  package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
+  package_install_options => [],
 }
 ```
 
@@ -89,8 +107,8 @@ See [REFERENCE.md](REFERENCE.md).
 - Needs systemd. Supported platforms are listed in `metadata.json`.
 - The timer is managed with puppet/systemd, which includes that module's
   `systemd` class with whatever settings your site gives it.
-- Unit-tested only so far: the timer's sandbox and the SSH account have not
-  been run on a real server.
+- Unit-tested only so far: the install, the timer's sandbox and the SSH
+  account have not been run on a real server.
 
 ## Development
 
