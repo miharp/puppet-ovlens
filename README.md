@@ -6,7 +6,7 @@ keeps the documentation for the deployed Puppet code up to date. Pre-release.
 ovlens runs openvox-strings over every module in an environment and serves the
 result to AI assistants through a read-only MCP server. This module:
 
-- installs the `ovlens` gem into the agent's Ruby, which already has OpenVox
+- installs the `ovlens` package from the harpworks repository
 - regenerates the documentation from a systemd timer
 - optionally adds an account that can only run the MCP server over SSH
 
@@ -30,22 +30,29 @@ class { 'ovlens':
 }
 ```
 
-### Where the gem comes from
+### Where the package comes from
 
-ovlens is not on RubyGems. The module installs it from the
-[harpworks repository](https://packages.harpworks.org), which carries ovlens
-and its dependencies, with `--clear-sources` so that nothing is fetched from
-rubygems.org. The gem index is not signed; HTTPS to the repository is what
-vouches for it.
+By default the module configures the
+[harpworks repository](https://packages.harpworks.org) and installs the
+`ovlens` rpm or deb from it. The repository's metadata is signed, and the
+module ships the public key. The package carries its own gems and depends only
+on `openvox-agent`, so installing it downloads nothing else.
 
-On a server that cannot reach the repository, copy the gem there and install
-from the file. The dependencies then come from whatever gem sources the server
-has:
+On a node where the codavox module already manages that repository, leave it
+to codavox:
 
 ```puppet
 class { 'ovlens':
-  package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
-  package_install_options => [],
+  repo_manage => false,
+}
+```
+
+For a mirror of the repository, set `repo_baseurl`. For a server with no
+repository at all, copy the package over and install the file:
+
+```puppet
+class { 'ovlens':
+  package_source => '/opt/packages/ovlens_0.1.0_linux_noarch.rpm',
 }
 ```
 
@@ -61,7 +68,7 @@ class { 'ovlens':
 ```
 
 ```yaml
-postrun: ['/opt/puppetlabs/puppet/bin/ovlens', 'generate', '$modifiedenvs']
+postrun: ['/usr/bin/ovlens', 'generate', '$modifiedenvs']
 ```
 
 The module does not edit `r10k.yaml`, because another module usually owns it.
@@ -107,8 +114,12 @@ See [REFERENCE.md](REFERENCE.md).
 - Needs systemd. Supported platforms are listed in `metadata.json`.
 - The timer is managed with puppet/systemd, which includes that module's
   `systemd` class with whatever settings your site gives it.
-- Unit-tested only so far: the install, the timer's sandbox and the SSH
-  account have not been run on a real server.
+- Unit-tested only so far. The package itself is tested on real OpenVox
+  agents, but this module's install, the timer's sandbox and the SSH account
+  have not been applied on a real server.
+- The codavox module declares the same repository resources. Both managing the
+  repository on one node is a duplicate declaration; set `repo_manage` to
+  false in one of them.
 
 ## Development
 

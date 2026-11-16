@@ -13,8 +13,9 @@
 #### Private Classes
 
 * `ovlens::generate`: Regenerates the documentation from a systemd timer
-* `ovlens::install`: Installs the ovlens gem
+* `ovlens::install`: Installs the ovlens package
 * `ovlens::mcp`: Manages an account that can only run the MCP server over SSH
+* `ovlens::repo`: Configures the harpworks package repository
 
 ## Classes
 
@@ -22,9 +23,9 @@
 
 ovlens runs openvox-strings over every module in an OpenVox environment and
 serves the result to AI assistants through a read-only MCP server. On an
-OpenVox server this class installs the gem into the agent's Ruby, regenerates
-the documentation from a systemd timer, and can add an account that is only
-able to reach the MCP server over SSH.
+OpenVox server this class installs the ovlens package, regenerates the
+documentation from a systemd timer, and can add an account that is only able
+to reach the MCP server over SSH.
 
 #### Examples
 
@@ -43,12 +44,11 @@ class { 'ovlens':
 }
 ```
 
-##### Install from a gem file on a server that cannot reach the repository
+##### Install from a package file on a server that cannot reach the repository
 
 ```puppet
 class { 'ovlens':
-  package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
-  package_install_options => [],
+  package_source => '/opt/packages/ovlens_0.1.0_linux_noarch.rpm',
 }
 ```
 
@@ -70,9 +70,10 @@ The following parameters are available in the `ovlens` class:
 * [`package_manage`](#-ovlens--package_manage)
 * [`package_name`](#-ovlens--package_name)
 * [`package_ensure`](#-ovlens--package_ensure)
-* [`package_provider`](#-ovlens--package_provider)
 * [`package_source`](#-ovlens--package_source)
-* [`package_install_options`](#-ovlens--package_install_options)
+* [`package_provider`](#-ovlens--package_provider)
+* [`repo_manage`](#-ovlens--repo_manage)
+* [`repo_baseurl`](#-ovlens--repo_baseurl)
 * [`command`](#-ovlens--command)
 * [`docs_dir`](#-ovlens--docs_dir)
 * [`generate_ensure`](#-ovlens--generate_ensure)
@@ -96,7 +97,7 @@ Default value: `true`
 
 Data type: `String[1]`
 
-The gem to install.
+The package to install.
 
 Default value: `'ovlens'`
 
@@ -104,40 +105,47 @@ Default value: `'ovlens'`
 
 Data type: `String[1]`
 
-`installed`, `absent` or a version. Avoid `latest`: the gem provider's
-check for it also asks rubygems.org, whatever the source.
+`installed`, `latest`, `absent` or a version.
 
 Default value: `'installed'`
 
-##### <a name="-ovlens--package_provider"></a>`package_provider`
-
-Data type: `String[1]`
-
-The package provider. `puppet_gem` installs into the agent's Ruby, which
-already has OpenVox.
-
-Default value: `'puppet_gem'`
-
 ##### <a name="-ovlens--package_source"></a>`package_source`
 
-Data type: `String[1]`
+Data type: `Optional[String[1]]`
 
-The gem repository or gem file to install from. The default is the
-harpworks repository, which carries ovlens and its dependencies. ovlens is
-not published on RubyGems.
+Install from this package file instead of from the repository, for a
+server that cannot reach it. The repository is then not configured. The
+package carries its own gems and depends only on openvox-agent, so a file
+install needs nothing else.
 
-Default value: `'https://packages.harpworks.org/gems'`
+Default value: `undef`
 
-##### <a name="-ovlens--package_install_options"></a>`package_install_options`
+##### <a name="-ovlens--package_provider"></a>`package_provider`
 
-Data type: `Array[String[1]]`
+Data type: `Optional[String[1]]`
 
-Options for `gem install`. The default, `--clear-sources`, makes the
-repository the only source, so a gem published on RubyGems under the same
-name cannot be installed instead. Empty it when installing from a gem file,
-so the dependencies can come from RubyGems.
+The provider to use when `package_source` is set. Defaults to `rpm` or
+`dpkg` by OS family.
 
-Default value: `['--clear-sources']`
+Default value: `undef`
+
+##### <a name="-ovlens--repo_manage"></a>`repo_manage`
+
+Data type: `Boolean`
+
+Whether to configure the harpworks package repository, which serves ovlens
+and codavox. Set it to false on a node where the codavox module already
+manages that repository. Ignored when `package_source` is set.
+
+Default value: `true`
+
+##### <a name="-ovlens--repo_baseurl"></a>`repo_baseurl`
+
+Data type: `Stdlib::HTTPUrl`
+
+Where the repository is served from. Change it only for a mirror.
+
+Default value: `'https://packages.harpworks.org'`
 
 ##### <a name="-ovlens--command"></a>`command`
 
@@ -145,7 +153,7 @@ Data type: `Stdlib::Absolutepath`
 
 The installed `ovlens` command.
 
-Default value: `'/opt/puppetlabs/puppet/bin/ovlens'`
+Default value: `'/usr/bin/ovlens'`
 
 ##### <a name="-ovlens--docs_dir"></a>`docs_dir`
 

@@ -2,9 +2,9 @@
 #
 # ovlens runs openvox-strings over every module in an OpenVox environment and
 # serves the result to AI assistants through a read-only MCP server. On an
-# OpenVox server this class installs the gem into the agent's Ruby, regenerates
-# the documentation from a systemd timer, and can add an account that is only
-# able to reach the MCP server over SSH.
+# OpenVox server this class installs the ovlens package, regenerates the
+# documentation from a systemd timer, and can add an account that is only able
+# to reach the MCP server over SSH.
 #
 # @example Document every environment
 #   include ovlens
@@ -15,10 +15,9 @@
 #     environments   => ['production', 'staging'],
 #   }
 #
-# @example Install from a gem file on a server that cannot reach the repository
+# @example Install from a package file on a server that cannot reach the repository
 #   class { 'ovlens':
-#     package_source          => '/opt/ovlens/ovlens-0.1.0.gem',
-#     package_install_options => [],
+#     package_source => '/opt/packages/ovlens_0.1.0_linux_noarch.rpm',
 #   }
 #
 # @example Let one SSH key reach the MCP server
@@ -32,22 +31,23 @@
 # @param package_manage
 #   Whether to install ovlens.
 # @param package_name
-#   The gem to install.
+#   The package to install.
 # @param package_ensure
-#   `installed`, `absent` or a version. Avoid `latest`: the gem provider's
-#   check for it also asks rubygems.org, whatever the source.
-# @param package_provider
-#   The package provider. `puppet_gem` installs into the agent's Ruby, which
-#   already has OpenVox.
+#   `installed`, `latest`, `absent` or a version.
 # @param package_source
-#   The gem repository or gem file to install from. The default is the
-#   harpworks repository, which carries ovlens and its dependencies. ovlens is
-#   not published on RubyGems.
-# @param package_install_options
-#   Options for `gem install`. The default, `--clear-sources`, makes the
-#   repository the only source, so a gem published on RubyGems under the same
-#   name cannot be installed instead. Empty it when installing from a gem file,
-#   so the dependencies can come from RubyGems.
+#   Install from this package file instead of from the repository, for a
+#   server that cannot reach it. The repository is then not configured. The
+#   package carries its own gems and depends only on openvox-agent, so a file
+#   install needs nothing else.
+# @param package_provider
+#   The provider to use when `package_source` is set. Defaults to `rpm` or
+#   `dpkg` by OS family.
+# @param repo_manage
+#   Whether to configure the harpworks package repository, which serves ovlens
+#   and codavox. Set it to false on a node where the codavox module already
+#   manages that repository. Ignored when `package_source` is set.
+# @param repo_baseurl
+#   Where the repository is served from. Change it only for a mirror.
 # @param command
 #   The installed `ovlens` command.
 # @param docs_dir
@@ -76,10 +76,11 @@ class ovlens (
   Boolean $package_manage                    = true,
   String[1] $package_name                    = 'ovlens',
   String[1] $package_ensure                  = 'installed',
-  String[1] $package_provider                = 'puppet_gem',
-  String[1] $package_source                  = 'https://packages.harpworks.org/gems',
-  Array[String[1]] $package_install_options  = ['--clear-sources'],
-  Stdlib::Absolutepath $command              = '/opt/puppetlabs/puppet/bin/ovlens',
+  Optional[String[1]] $package_source        = undef,
+  Optional[String[1]] $package_provider      = undef,
+  Boolean $repo_manage                       = true,
+  Stdlib::HTTPUrl $repo_baseurl              = 'https://packages.harpworks.org',
+  Stdlib::Absolutepath $command              = '/usr/bin/ovlens',
   Stdlib::Absolutepath $docs_dir             = '/opt/puppetlabs/server/data/ovlens',
   Enum['present', 'absent'] $generate_ensure = 'present',
   Pattern[/\A\d+(s|sec|m|min|h|hr|d)\z/] $generate_interval = '5min',
@@ -93,6 +94,12 @@ class ovlens (
   contain ovlens::install
   contain ovlens::generate
   contain ovlens::mcp
+
+  # A package file needs no repository.
+  if $package_manage and $repo_manage and !$package_source {
+    contain ovlens::repo
+    Class['ovlens::repo'] -> Class['ovlens::install']
+  }
 
   Class['ovlens::install'] -> Class['ovlens::generate']
   Class['ovlens::install'] -> Class['ovlens::mcp']

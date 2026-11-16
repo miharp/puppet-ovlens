@@ -9,5 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The `ovlens` class: installs the ovlens gem, regenerates the documentation from a systemd timer, and can
+- The `ovlens` class: installs the ovlens package from the harpworks repository, regenerates the documentation from a systemd timer, and can
   add an account that only reaches the MCP server over SSH.

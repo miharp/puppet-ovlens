@@ -6,17 +6,31 @@ describe 'ovlens' do
   on_supported_os.each do |os, os_facts|
     context "on #{os}" do
       let(:facts) { os_facts }
+      let(:redhat) { os_facts[:os]['family'] == 'RedHat' }
 
       context 'with defaults' do
         it { is_expected.to compile.with_all_deps }
 
-        it 'installs the gem into the agent Ruby, from the harpworks repository alone, before anything uses it' do
-          is_expected.to contain_package('ovlens').with(
-            ensure: 'installed', provider: 'puppet_gem',
-            source: 'https://packages.harpworks.org/gems', install_options: ['--clear-sources']
-          )
+        it 'installs the package from the harpworks repository before anything uses it' do
+          is_expected.to contain_package('ovlens').with(ensure: 'installed', source: nil, provider: nil)
+          is_expected.to contain_class('ovlens::repo').that_comes_before('Class[ovlens::install]')
           is_expected.to contain_class('ovlens::install').that_comes_before('Class[ovlens::generate]')
           is_expected.to contain_class('ovlens::install').that_comes_before('Class[ovlens::mcp]')
+        end
+
+        it 'configures the repository with its metadata signature checked' do
+          if redhat
+            is_expected.to contain_yumrepo('harpworks').with(
+              baseurl: 'https://packages.harpworks.org/rpm', repo_gpgcheck: '1',
+              gpgkey: 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks'
+            ).that_comes_before('Package[ovlens]')
+            is_expected.to contain_file('/etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks').with_source('puppet:///modules/ovlens/harpworks.asc')
+          else
+            is_expected.to contain_file('/etc/apt/sources.list.d/harpworks.list')
+              .with_content("deb [signed-by=/etc/apt/keyrings/harpworks.asc] https://packages.harpworks.org/deb stable main\n")
+            is_expected.to contain_file('/etc/apt/keyrings/harpworks.asc').with_source('puppet:///modules/ovlens/harpworks.asc')
+            is_expected.to contain_exec('harpworks apt-get update').with_refreshonly(true).that_comes_before('Package[ovlens]')
+          end
         end
 
         it 'manages the documentation directory' do
@@ -27,7 +41,7 @@ describe 'ovlens' do
           is_expected.to contain_systemd__timer('ovlens-generate.timer').with(ensure: 'present', active: true, enable: true)
                                                                         .that_requires('File[/opt/puppetlabs/server/data/ovlens]')
           is_expected.to contain_systemd__timer('ovlens-generate.timer')
-            .with_service_content(%r{^ExecStart=/opt/puppetlabs/puppet/bin/ovlens generate --docs-dir "/opt/puppetlabs/server/data/ovlens" --all$})
+            .with_service_content(%r{^ExecStart=/usr/bin/ovlens generate --docs-dir "/opt/puppetlabs/server/data/ovlens" --all$})
             .with_timer_content(%r{^OnUnitActiveSec=5min$})
         end
 
@@ -65,10 +79,49 @@ describe 'ovlens' do
         end
       end
 
-      context 'with a gem file and a pinned version' do
-        let(:params) { { package_source: '/opt/ovlens/ovlens-0.1.0.gem', package_install_options: [], package_ensure: '0.1.0' } }
+      context 'with a mirror and a pinned version' do
+        let(:params) { { repo_baseurl: 'https://mirror.example.com/harpworks', package_ensure: '0.1.0' } }
 
-        it { is_expected.to contain_package('ovlens').with(ensure: '0.1.0', source: '/opt/ovlens/ovlens-0.1.0.gem', install_options: []) }
+        it { is_expected.to contain_package('ovlens').with_ensure('0.1.0') }
+
+        it do
+          if redhat
+            is_expected.to contain_yumrepo('harpworks').with_baseurl('https://mirror.example.com/harpworks/rpm')
+          else
+            is_expected.to contain_file('/etc/apt/sources.list.d/harpworks.list').with_content(%r{ https://mirror\.example\.com/harpworks/deb stable main$})
+          end
+        end
+      end
+
+      context 'with a package file' do
+        let(:params) { { package_source: '/opt/packages/ovlens.pkg' } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        it 'installs the file with the low-level provider and leaves the repository alone' do
+          is_expected.to contain_package('ovlens').with(source: '/opt/packages/ovlens.pkg', provider: redhat ? 'rpm' : 'dpkg')
+          is_expected.not_to contain_class('ovlens::repo')
+        end
+      end
+
+      context 'with a package file and a pinned version' do
+        let(:params) { { package_source: '/opt/packages/ovlens.pkg', package_ensure: '0.1.0' } }
+
+        it do
+          if redhat
+            is_expected.to contain_package('ovlens').with(ensure: '0.1.0', provider: 'rpm')
+          else
+            is_expected.to compile.and_raise_error(%r{dpkg, which cannot pin a version})
+          end
+        end
+      end
+
+      context 'with repo_manage => false' do
+        let(:params) { { repo_manage: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_class('ovlens::repo') }
+        it { is_expected.to contain_package('ovlens') }
       end
 
       context 'with package_manage => false' do
@@ -76,6 +129,7 @@ describe 'ovlens' do
 
         it { is_expected.to compile.with_all_deps }
         it { is_expected.not_to contain_package('ovlens') }
+        it { is_expected.not_to contain_class('ovlens::repo') }
       end
 
       context 'with generate_ensure => absent' do
@@ -106,7 +160,7 @@ describe 'ovlens' do
         end
 
         it 'locks every key to the MCP server' do
-          options = ['command="/opt/puppetlabs/puppet/bin/ovlens mcp --docs-dir /opt/puppetlabs/server/data/ovlens"', 'restrict']
+          options = ['command="/usr/bin/ovlens mcp --docs-dir /opt/puppetlabs/server/data/ovlens"', 'restrict']
           is_expected.to contain_ssh_authorized_key('ovlens-alice').with(
             user: 'ovlens', type: 'ssh-ed25519', key: 'AAAAC3NzaC1lZDI1NTE5AAAAIalice', options: options,
           )
