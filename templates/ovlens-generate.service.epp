@@ -1,6 +1,8 @@
 <%- | Stdlib::Absolutepath $command,
       Stdlib::Absolutepath $docs_dir,
       Optional[Stdlib::Absolutepath] $environmentpath,
+      Boolean $hiera,
+      Array[String[1]] $hiera_masks,
       String[1] $targets,
 | -%>
 # Managed by Puppet (ovlens module).
@@ -10,7 +12,7 @@ Documentation=https://github.com/miharp/ovlens
 
 [Service]
 Type=oneshot
-ExecStart=<%= $command %> generate --docs-dir "<%= $docs_dir %>"<% if $environmentpath { %> --environmentpath "<%= $environmentpath %>"<% } %> <%= $targets %>
+ExecStart=<%= $command %> generate --docs-dir "<%= $docs_dir %>"<% if $environmentpath { %> --environmentpath "<%= $environmentpath %>"<% } %><% if $hiera { %> --hiera<% $hiera_masks.each |$pattern| { %> --hiera-mask "<%= $pattern %>"<% } } %> <%= $targets %>
 Nice=10
 # The generator reads the code and writes only its own directory.
 NoNewPrivileges=true

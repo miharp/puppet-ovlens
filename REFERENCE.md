@@ -52,6 +52,15 @@ class { 'ovlens':
 }
 ```
 
+##### Index Hiera data too, masking LDAP settings as well as secrets
+
+```puppet
+class { 'ovlens':
+  hiera       => true,
+  hiera_masks => ['*ldap*'],
+}
+```
+
 ##### Let one SSH key reach the MCP server
 
 ```puppet
@@ -80,6 +89,8 @@ The following parameters are available in the `ovlens` class:
 * [`generate_interval`](#-ovlens--generate_interval)
 * [`environments`](#-ovlens--environments)
 * [`environmentpath`](#-ovlens--environmentpath)
+* [`hiera`](#-ovlens--hiera)
+* [`hiera_masks`](#-ovlens--hiera_masks)
 * [`mcp_manage`](#-ovlens--mcp_manage)
 * [`mcp_user`](#-ovlens--mcp_user)
 * [`mcp_home`](#-ovlens--mcp_home)
@@ -199,6 +210,29 @@ The directory holding the environments. Defaults to the server's
 `environmentpath` setting.
 
 Default value: `undef`
+
+##### <a name="-ovlens--hiera"></a>`hiera`
+
+Data type: `Boolean`
+
+Whether the timer also indexes each environment's Hiera data, for the
+Hiera tools: where a key is set, which class parameter it feeds, and keys
+for parameters that do not exist. Needs ovlens 0.3.0 or later. Values are
+masked before they are written, but only eyaml values, private keys and
+keys named like `*password*` or `*token*`; anyone who can read `docs_dir`
+can read the rest. Turning it off removes the indexed data on the next
+run. A deploy that runs `ovlens generate` itself must pass `--hiera`.
+
+Default value: `false`
+
+##### <a name="-ovlens--hiera_masks"></a>`hiera_masks`
+
+Data type: `Array[Pattern[/\A[^\s"'\\%$]+\z/]]`
+
+More patterns of key names whose values are masked, such as `*ldap*`, on
+top of ovlens's own. Used only with `hiera`.
+
+Default value: `[]`
 
 ##### <a name="-ovlens--mcp_manage"></a>`mcp_manage`
 

@@ -21,6 +21,8 @@ class ovlens::generate {
     'command'         => $ovlens::command,
     'docs_dir'        => $ovlens::docs_dir,
     'environmentpath' => $ovlens::environmentpath,
+    'hiera'           => $ovlens::hiera,
+    'hiera_masks'     => $ovlens::hiera_masks,
     'targets'         => $targets,
   })
 
