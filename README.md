@@ -73,6 +73,24 @@ postrun: ['/usr/bin/ovlens', 'generate', '$modifiedenvs']
 
 The module does not edit `r10k.yaml`, because another module usually owns it.
 
+### Hiera data
+
+With ovlens 0.3.0 or later, the timer can index each environment's Hiera data
+too, for ovlens's Hiera tools:
+
+```puppet
+class { 'ovlens':
+  hiera       => true,
+  hiera_masks => ['*ldap*'],
+}
+```
+
+Values are masked before they are written, but only eyaml values, private
+keys and keys named like `*password*` or `*token*`. `hiera_masks` adds name
+patterns. Anyone who can read `docs_dir` can read the rest. Setting `hiera`
+back to false removes the indexed data on the next run. A deploy that runs
+`ovlens generate` itself must pass `--hiera`, or it removes the data.
+
 ### MCP access over SSH
 
 ```puppet

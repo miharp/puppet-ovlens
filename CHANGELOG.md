@@ -11,3 +11,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The `ovlens` class: installs the ovlens package from the harpworks repository, regenerates the documentation from a systemd timer, and can
   add an account that only reaches the MCP server over SSH.
+- `hiera` and `hiera_masks`: the timer can index Hiera data too, with more key patterns masked (needs ovlens 0.3.0).

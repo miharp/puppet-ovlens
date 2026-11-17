@@ -169,6 +169,31 @@ describe 'ovlens' do
         end
       end
 
+      context 'with Hiera data and extra masks' do
+        let(:params) { { hiera: true, hiera_masks: ['*ldap*', 'profile::*::bind_dn'] } }
+
+        it 'indexes Hiera data, masking those patterns too' do
+          is_expected.to contain_systemd__timer('ovlens-generate.timer').with_service_content(
+            %r{^ExecStart=/usr/bin/ovlens generate --docs-dir "/opt/puppetlabs/server/data/ovlens" --hiera --hiera-mask "\*ldap\*" --hiera-mask "profile::\*::bind_dn" --all$},
+          )
+        end
+      end
+
+      context 'with masks but no Hiera data' do
+        let(:params) { { hiera_masks: ['*ldap*'] } }
+
+        it 'ignores the masks' do
+          is_expected.to contain_systemd__timer('ovlens-generate.timer')
+            .with_service_content(%r{^ExecStart=/usr/bin/ovlens generate --docs-dir "/opt/puppetlabs/server/data/ovlens" --all$})
+        end
+      end
+
+      context 'with a mask systemd would read' do
+        let(:params) { { hiera: true, hiera_masks: ['*"; rm -rf /'] } }
+
+        it { is_expected.not_to compile }
+      end
+
       context 'with an invalid environment name' do
         let(:params) { { environments: ['production; rm -rf /'] } }
 

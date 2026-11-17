@@ -20,6 +20,12 @@
 #     package_source => '/opt/packages/ovlens_0.1.0_linux_noarch.rpm',
 #   }
 #
+# @example Index Hiera data too, masking LDAP settings as well as secrets
+#   class { 'ovlens':
+#     hiera       => true,
+#     hiera_masks => ['*ldap*'],
+#   }
+#
 # @example Let one SSH key reach the MCP server
 #   class { 'ovlens':
 #     mcp_manage   => true,
@@ -65,6 +71,17 @@
 # @param environmentpath
 #   The directory holding the environments. Defaults to the server's
 #   `environmentpath` setting.
+# @param hiera
+#   Whether the timer also indexes each environment's Hiera data, for the
+#   Hiera tools: where a key is set, which class parameter it feeds, and keys
+#   for parameters that do not exist. Needs ovlens 0.3.0 or later. Values are
+#   masked before they are written, but only eyaml values, private keys and
+#   keys named like `*password*` or `*token*`; anyone who can read `docs_dir`
+#   can read the rest. Turning it off removes the indexed data on the next
+#   run. A deploy that runs `ovlens generate` itself must pass `--hiera`.
+# @param hiera_masks
+#   More patterns of key names whose values are masked, such as `*ldap*`, on
+#   top of ovlens's own. Used only with `hiera`.
 # @param mcp_manage
 #   Whether to manage an account that can only run the MCP server over SSH.
 # @param mcp_user
@@ -88,6 +105,9 @@ class ovlens (
   Pattern[/\A\d+(s|sec|m|min|h|hr|d)\z/] $generate_interval = '5min',
   Array[Pattern[/\A[a-z0-9_]+\z/]] $environments = [],
   Optional[Stdlib::Absolutepath] $environmentpath = undef,
+  Boolean $hiera                             = false,
+  # No quotes, spaces, backslashes, % or $: systemd would read them.
+  Array[Pattern[/\A[^\s"'\\%$]+\z/]] $hiera_masks = [],
   Boolean $mcp_manage                        = false,
   String[1] $mcp_user                        = 'ovlens',
   Stdlib::Absolutepath $mcp_home             = '/var/lib/ovlens',
